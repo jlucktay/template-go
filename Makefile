@@ -15,12 +15,12 @@ SHELL := bash
 MAKEFLAGS += --no-builtin-rules
 MAKEFLAGS += --warn-undefined-variables
 
-IMAGE_NAME ?= "jlucktay/TODO"
-
 ifeq ($(origin .RECIPEPREFIX), undefined)
   $(error This Make does not support .RECIPEPREFIX. Please use GNU Make 4.0 or later.)
 endif
 .RECIPEPREFIX = >
+
+image_repository ?= "jlucktay/TODO"
 
 # Adjust the width of the first column by changing the '16' value in the printf pattern.
 help:
@@ -47,7 +47,7 @@ clean: ## Clean up the temp and output directories. This will cause everything t
 
 clean-docker: ## Clean up any built Docker images.
 > docker images \
-  --filter=reference='$(IMAGE_NAME)' \
+  --filter=reference=$(image_repository) \
   --no-trunc --quiet | sort -f | uniq | xargs -n 1 docker rmi --force
 > rm -f out/image-id
 .PHONY: clean-docker
@@ -68,6 +68,6 @@ tmp/.linted.sentinel: tmp/.tests-passed.sentinel
 # Docker image - re-build if the lint output is re-run.
 out/image-id: tmp/.linted.sentinel
 > mkdir -p $(@D)
-> image_id="$(IMAGE_NAME):$$(uuidgen)"
+> image_id="$(image_repository):$$(uuidgen)"
 > docker build --tag="$${image_id}" .
 > echo "$${image_id}" > out/image-id
