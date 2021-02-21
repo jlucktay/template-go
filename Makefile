@@ -5,8 +5,8 @@
 
 SHELL := bash
 
-# Default - top level rule is what gets run when you run just `make` without specifying a goal/target.
-.DEFAULT_GOAL := help
+# Default - top level rule is what gets run when you run just 'make' without specifying a goal/target.
+.DEFAULT_GOAL := build
 
 .DELETE_ON_ERROR:
 .ONESHELL:
@@ -20,29 +20,27 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
-image_repository ?= "jlucktay/TODO"
+binary_name ?= $(shell basename $(CURDIR))
+image_repository ?= jlucktay/TODO
 
-# Adjust the width of the first column by changing the '16' value in the printf pattern.
+# Adjust the width of the first column by changing the '-20s' value in the printf pattern.
 help:
-> @grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
-  | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-16s\033[0m %s\n", $$1, $$2}'
+> @grep -E '^[a-zA-Z0-9_-]+:.*? ## .*$$' $(MAKEFILE_LIST) | sort \
+> | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
-all: test lint build ## Build and lint and test.
-.PHONY: all
-
+all: test lint build ## Test and lint and build.
 test: tmp/.tests-passed.sentinel ## Run tests.
-.PHONY: test
+test-cover: tmp/.cover-tests-passed.sentinel ## Run all tests with the race detector and output a coverage profile.
+bench: tmp/.benchmarks-ran.sentinel ## Run enough iterations of each benchmark to take ten seconds each.
+lint: tmp/.linted.sentinel ## Lint the Dockerfile and all of the Go code. Will also test.
+build: out/image-id ## [DEFAULT] Build the Docker image. Will also test and lint.
+build-binary: $(binary_name) ## Build a bare binary only, without a Docker image wrapped around it.
+.PHONY: all test test-cover bench lint build build-binary
 
-lint: tmp/.linted.sentinel ## Lint all of the Go code. Will also test.
-.PHONY: lint
-
-build: out/image-id ## Build the Docker image. Will also lint and test.
-.PHONY: build
-
-clean: ## Clean up the temp and output directories. This will cause everything to get rebuilt.
-> rm -rf tmp
-> rm -rf out
+clean: ## Clean up the built binary, test coverage, and the temp and output sub-directories.
+> go clean -x -v
+> rm -rf cover.out tmp out
 .PHONY: clean
 
 clean-docker: ## Clean up any built Docker images.
@@ -52,22 +50,55 @@ clean-docker: ## Clean up any built Docker images.
 > rm -f out/image-id
 .PHONY: clean-docker
 
-# Tests - re-run if any Go files have changes since tmp/.tests-passed.sentinel last touched.
+clean-hack: ## Clean up binaries under 'hack'.
+> rm -rf hack/bin
+.PHONY: clean-hack
+
+clean-all: clean clean-docker clean-hack ## Clean all of the things.
+.PHONY: clean-all
+
+# Tests - re-run if any Go files have changes since tmp/.tests-passed.sentinel was last touched.
 tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go")
 > mkdir -p $(@D)
 > go test ./...
 > touch $@
 
-# Lint - re-run if the tests have been re-run (and so, by proxy, whenever the source files have changed).
-tmp/.linted.sentinel: tmp/.tests-passed.sentinel
+tmp/.cover-tests-passed.sentinel: cover.out $(shell find . -type f -iname "*.go")
 > mkdir -p $(@D)
-> golangci-lint run
-> go vet ./...
+> go test -count=1 -covermode=atomic -coverprofile=cover.out -race ./...
 > touch $@
 
-# Docker image - re-build if the lint output is re-run.
-out/image-id: tmp/.linted.sentinel
+tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go")
 > mkdir -p $(@D)
-> image_id="$(image_repository):$$(uuidgen)"
-> docker build --tag="$${image_id}" .
+> go test ./... -bench=. -benchmem -benchtime=10s -run=DoNotRunTests
+> touch $@
+
+# Lint - re-run if the tests have been re-run (and so, by proxy, whenever the source files have changed).
+tmp/.linted.sentinel: Dockerfile .golangci.yaml .hadolint.yaml hack/bin/golangci-lint tmp/.tests-passed.sentinel
+> mkdir -p $(@D)
+> docker run --env XDG_CONFIG_HOME=/etc --interactive --rm \
+> --volume "$(shell pwd)/.hadolint.yaml:/etc/hadolint.yaml:ro" hadolint/hadolint < Dockerfile
+> find . -type f -iname "*.go" -exec gofmt -e -l -s "{}" + \
+> | awk '{ print } END { if (NR != 0) { print "gofmt found issues in the above file(s); \
+please run \"make lint-simplify\" to remedy"; exit 1 } }'
+> go vet ./...
+> hack/bin/golangci-lint run
+> touch $@
+
+lint-simplify: ## Runs 'gofmt -s' to format and simplify all Go code.
+> find . -type f -iname "*.go" -exec gofmt -s -w "{}" +
+.PHONY: lint-simplify
+
+hack/bin/golangci-lint:
+> curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+> | sh -s -- -b $(shell pwd)/hack/bin
+
+# Docker image - re-build if the lint output is re-run.
+out/image-id: Dockerfile tmp/.linted.sentinel
+> mkdir -p $(@D)
+> image_id="$(image_repository):$(shell uuidgen)"
+> DOCKER_BUILDKIT=1 docker build --tag="$${image_id}" .
 > echo "$${image_id}" > out/image-id
+
+$(binary_name): tmp/.linted.sentinel
+> go build -ldflags="-buildid= -w" -trimpath -v

@@ -5,7 +5,7 @@ issues:
     - ^should have a package comment, unless it's in another file for this package$
   max-issues-per-linter: 0
   max-same-issues: 0
-  new-from-rev: main
+  new-from-rev: origin/main
 
 linters-settings:
   dogsled:
@@ -22,7 +22,7 @@ linters-settings:
     errorf: true
 
   gci:
-    local-prefixes: github.com/TODO/HACK
+    local-prefixes: go.jlucktay.dev/TODO
 
   goconst:
     min-len: 3

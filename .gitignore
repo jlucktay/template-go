@@ -25,5 +25,6 @@
 # End of https://www.toptal.com/developers/gitignore/api/go
 
 # Makefile things
-out/
-tmp/
+/hack/bin/
+/out/
+/tmp/
