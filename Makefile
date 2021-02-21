@@ -63,7 +63,7 @@ tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go")
 > go test ./...
 > touch $@
 
-tmp/.cover-tests-passed.sentinel: cover.out $(shell find . -type f -iname "*.go")
+tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go")
 > mkdir -p $(@D)
 > go test -count=1 -covermode=atomic -coverprofile=cover.out -race ./...
 > touch $@
