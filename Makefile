@@ -21,7 +21,7 @@ endif
 .RECIPEPREFIX = >
 
 binary_name ?= $(shell basename $(CURDIR))
-image_repository ?= jlucktay/template-go
+image_repository ?= jlucktay/$(binary_name)
 
 # Adjust the width of the first column by changing the '-20s' value in the printf pattern.
 help:
