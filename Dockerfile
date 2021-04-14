@@ -7,7 +7,7 @@ SHELL [ "/bin/bash", "-euo", "pipefail", "-c" ]
 RUN apt-get update \
   && apt-get install --assume-yes --no-install-recommends ca-certificates \
   && apt-get autoremove --assume-yes \
-  && rm -rf /root/.cache
+  && rm --force --recursive /root/.cache
 
 # Don't call any C code (the 'scratch' base image used later won't have any libraries to reference)
 ENV CGO_ENABLED=0
@@ -25,7 +25,10 @@ WORKDIR /go/src/go.jlucktay.dev/template-go
 COPY go.mod go.sum ./
 
 # Download and precompile all third party libraries
-RUN go mod graph | awk '$1 !~ "@" { print $2 }' | xargs --no-run-if-empty go get -ldflags="-buildid= -w" -trimpath -v
+RUN go mod graph \
+  | awk '$1 !~ "@" { print $2 }' \
+  | xargs --max-args=1 --no-run-if-empty --verbose \
+  go get -ldflags="-buildid= -w" -trimpath -v
 
 # Add the sources
 COPY . .
