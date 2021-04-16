@@ -21,16 +21,8 @@ RUN go install -ldflags="-buildid= -w" -trimpath -v std
 
 WORKDIR /go/src/go.jlucktay.dev/template-go
 
-# This will save Go dependencies in the Docker cache, until/unless they change
+# This will help save vendored Go dependencies in the Docker cache, until/unless they change
 COPY go.mod go.sum ./
-
-# Download and precompile all third party libraries
-RUN go mod graph \
-  | awk '$1 !~ "@" { print $2 }' \
-  | xargs --max-args=1 --no-run-if-empty --verbose \
-  go get -ldflags="-buildid= -w" -trimpath -v
-
-# Copy vendored things into place
 COPY vendor vendor/
 
 # Install vendored things to cache them
