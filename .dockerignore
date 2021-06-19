@@ -9,6 +9,6 @@ Dockerfile
 template-go
 
 # Makefile things
-hack/bin/
-out/
-tmp/
+/hack/bin/
+/out/
+/tmp/
