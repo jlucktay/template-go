@@ -26,6 +26,7 @@ WORKDIR /go/src/go.jlucktay.dev/template-go
 # This will help save vendored Go dependencies in the Docker cache, until/unless they change
 COPY go.mod go.sum ./
 COPY vendor vendor/
+RUN go mod download -x
 
 # Install vendored things to cache them
 RUN grep --extended-regexp --invert-match "^#" vendor/modules.txt \
