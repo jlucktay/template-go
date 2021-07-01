@@ -20,12 +20,15 @@ ifeq ($(origin .RECIPEPREFIX), undefined)
 endif
 .RECIPEPREFIX = >
 
+# Bring in variables from .env file, ignoring errors if it does not exist
+-include .env
+
 binary_name ?= $(shell basename $(CURDIR))
 image_repository ?= jlucktay/$(binary_name)
 
 # Adjust the width of the first column by changing the '-20s' value in the printf pattern.
 help:
-> @grep -E '^[a-zA-Z0-9_-]+:.*? ## .*$$' $(MAKEFILE_LIST) | sort \
+> @grep -E '^[a-zA-Z0-9_-]+:.*? ## .*$$' $(filter-out .env, $(MAKEFILE_LIST)) | sort \
 > | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
@@ -58,17 +61,17 @@ clean-all: clean clean-docker clean-hack ## Clean all of the things.
 .PHONY: clean-all
 
 # Tests - re-run if any Go files have changes since tmp/.tests-passed.sentinel was last touched.
-tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go")
+tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
 > go test ./...
 > touch $@
 
-tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go")
+tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
 > go test -count=1 -covermode=atomic -coverprofile=cover.out -race ./...
 > touch $@
 
-tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go")
+tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
 > go test ./... -bench=. -benchmem -benchtime=10s -run=DoNotRunTests
 > touch $@
@@ -101,4 +104,4 @@ out/image-id: Dockerfile tmp/.linted.sentinel
 > echo "$${image_id}" > out/image-id
 
 $(binary_name): tmp/.linted.sentinel
-> go build -ldflags="-buildid= -w" -trimpath -v
+> go build -ldflags="-buildid= -w" -trimpath -v -o $(binary_name)
