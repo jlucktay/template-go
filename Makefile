@@ -23,8 +23,8 @@ endif
 # Bring in variables from .env file, ignoring errors if it does not exist
 -include .env
 
-binary_name ?= $(shell basename $(CURDIR))
-image_repository ?= jlucktay/$(binary_name)
+binary_name := $(shell basename $(CURDIR))
+image_repository := jlucktay/$(binary_name)
 
 # Adjust the width of the first column by changing the '-20s' value in the printf pattern.
 help:
