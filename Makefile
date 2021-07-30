@@ -99,17 +99,17 @@ clean-all: clean clean-docker ## Clean all of the things.
 # Tests - re-run if any Go files have changes since 'tmp/.tests-passed.sentinel' was last touched.
 tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
-> go test ./...
+> go test -v ./...
 > touch $@
 
 tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
-> go test -count=1 -covermode=atomic -coverprofile=cover.out -race ./...
+> go test -count=1 -covermode=atomic -coverprofile=cover.out -race -v ./...
 > touch $@
 
 tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
-> go test ./... -bench=. -benchmem -benchtime=10s -run=DoNotRunTests
+> go test -bench=. -benchmem -benchtime=10s -run=DoNotRunTests -v ./...
 > touch $@
 
 # Lint - re-run if the tests have been re-run (and so, by proxy, whenever the source files have changed).
