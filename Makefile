@@ -147,7 +147,7 @@ gofmt: ## Runs 'gofmt -s' to format and simplify all Go code.
 .PHONY: gofmt
 
 # Docker image - re-build if the lint output is re-run (and so, by proxy, whenever the source files have changed).
-out/image-id: Dockerfile tmp/.linted.sentinel
+out/image-id: tmp/.linted.sentinel
 > mkdir -p $(@D)
 > image_id="$(image_repository):$(shell uuidgen)"
 > DOCKER_BUILDKIT=1 docker build --tag="$${image_id}" .
