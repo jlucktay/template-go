@@ -31,6 +31,13 @@ MAKEFLAGS += --no-builtin-rules
 # Issue a warning message whenever Make sees a reference to an undefined variable.
 MAKEFLAGS += --warn-undefined-variables
 
+# Bring in variables from the '.env' file, ignoring errors if it does not exist.
+-include .env
+
+# Export all variables to child processes by default.
+# This is used to bring forward all of the values that have been set in the '.env' file included above.
+.EXPORT_ALL_VARIABLES:
+
 # Check that the version of Make running this file supports the .RECIPEPREFIX special variable.
 # We set it to '>' to clarify inlined scripts and disambiguate whitespace prefixes.
 # All script lines start with "> " which is the angle bracket and one space, with no tabs.
@@ -40,18 +47,15 @@ endif
 
 .RECIPEPREFIX = >
 
-# Configure an 'all' target to cover the bases.
-all: test lint build ## Test and lint and build.
-.PHONY: all
-
-# Bring in variables from .env file, ignoring errors if it does not exist
--include .env
-
 # GNU make knows how to execute several recipes at once.
 # Normally, make will execute only one recipe at a time, waiting for it to finish before executing the next.
 # However, the '-j' or '--jobs' option tells make to execute many recipes simultaneously.
 # With no argument, make runs as many recipes simultaneously as possible.
 MAKEFLAGS += --jobs
+
+# Configure an 'all' target to cover the bases.
+all: test lint build ## Test and lint and build.
+.PHONY: all
 
 binary_name := $(shell basename $(CURDIR))
 image_repository := jlucktay/$(binary_name)
@@ -109,7 +113,7 @@ tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod g
 
 tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
 > mkdir -p $(@D)
-> go test -bench=. -benchmem -benchtime=10s -run=DoNotRunTests -v ./...
+> go test -bench=. -benchmem -benchtime=10s -run='^DoNotRunTests$$' -v ./...
 > touch $@
 
 # Lint - re-run if the tests have been re-run (and so, by proxy, whenever the source files have changed).
