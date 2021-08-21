@@ -8,3 +8,5 @@ updates:
       # Check for updates to GitHub Actions every week.
       day: sunday
       interval: weekly
+      time: 03:00
+      timezone: UTC
