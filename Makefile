@@ -158,4 +158,4 @@ out/image-id: tmp/.linted.sentinel
 > echo "$${image_id}" > out/image-id
 
 $(binary_name): tmp/.linted.sentinel
-> go build -ldflags="-buildid= -w" -trimpath -v -o $(binary_name)
+> go build -trimpath -v -o $(binary_name)
