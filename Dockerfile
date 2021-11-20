@@ -26,7 +26,7 @@ COPY . .
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
 RUN --mount=type=cache,target=/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
-  go build -ldflags="-buildid= -w" -trimpath -v -o /bin/template-go
+  go build -trimpath -v -o /bin/template-go
 
 FROM scratch AS runner
 
