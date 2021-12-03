@@ -52,6 +52,10 @@ linters-settings:
   nestif:
     min-complexity: 4
 
+  nlreturn:
+    # Size of the block (including return statement that is still "OK") so no return split required.
+    block-size: 3
+
   nolintlint:
     # Exclude following linters from requiring an explanation.  Default is [].
     allow-no-explanation: []
