@@ -5,7 +5,7 @@ issues:
     - ^should have a package comment, unless it's in another file for this package$
   max-issues-per-linter: 0
   max-same-issues: 0
-  new-from-rev: origin/HEAD
+  new-from-rev: origin/main
 
 linters-settings:
   dogsled:
