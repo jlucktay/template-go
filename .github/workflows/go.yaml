@@ -6,13 +6,17 @@ on:
       - v*
     branches:
       - main
-    paths:
-      - "**.go"
   pull_request:
     branches:
       - main
-    paths:
-      - "**.go"
+
+# Concurrency ensures that only a single workflow using the same concurrency group will run at a time.
+# When a workflow is queued in the same repository and concurrency group, any workflow in progress will be cancelled.
+# This concurrency group is keyed to the 'ref' property in the 'github' context, to map back to the branch/tag that
+# triggered this workflow run.
+concurrency:
+  cancel-in-progress: true
+  group: test_lint_build_release_${{ github.ref }}
 
 jobs:
   build:
@@ -38,6 +42,26 @@ jobs:
 
       - name: Check out code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+      - name: Cache between runs
+        uses: actions/cache@v2
+        with:
+          # In order:
+          # * Module download cache
+          # * Build cache (Linux)
+          # * Build cache (Mac)
+          # * Build cache (Windows)
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            %LocalAppData%\go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
       - name: Update 'make' and run 'make all' on Linux
         if: ${{ matrix.platform == 'ubuntu-latest' }}
@@ -52,3 +76,36 @@ jobs:
         run: |
           brew install make
           /usr/local/opt/make/libexec/gnubin/make test
+
+  release:
+    name: Release 'v*'' tags
+
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out ${{ github.repository }} - all history
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Confirm that the 'main' branch contains the '${{ github.ref }}' tag
+        run: >
+          git branch --all --contains '${{ github.ref }}' --no-column --format='%(refname)'
+          | grep -c '\/main$'
+
+      - name: Set up Go 1.16
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          args: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
