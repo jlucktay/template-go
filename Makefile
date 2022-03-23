@@ -142,7 +142,7 @@ tmp/.linted.go.vet.sentinel: tmp/.tests-passed.sentinel
 
 tmp/.linted.golangci-lint.sentinel: .golangci.yaml tmp/.tests-passed.sentinel
 > mkdir -p $(@D)
-> docker run --env=XDG_CACHE_HOME=/go/cache --interactive --pull=always --rm --volume="$(shell pwd):/app:ro" \
+> docker run --env=XDG_CACHE_HOME=/go/cache --interactive --pull=always --rm --tty --volume="$(shell pwd):/app:ro" \
   --volume=golangci-lint-cache-$(subst /,_,$(image_repository)):/go --workdir=/app \
   golangci/golangci-lint golangci-lint run --verbose
 > touch $@
