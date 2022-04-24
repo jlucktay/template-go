@@ -137,7 +137,7 @@ tmp/.linted.sentinel: tmp/.linted.docker.sentinel tmp/.linted.gofmt.sentinel tmp
 tmp/.linted.docker.sentinel: Dockerfile .hadolint.yaml
 > mkdir -p $(@D)
 > docker run --env=XDG_CONFIG_HOME=/etc --interactive --pull=always --rm \
-  --volume="$(shell pwd)/.hadolint.yaml:/etc/hadolint.yaml:ro" hadolint/hadolint hadolint --verbose - < Dockerfile
+  --volume="$$(pwd)/.hadolint.yaml:/etc/hadolint.yaml:ro" hadolint/hadolint hadolint --verbose - < Dockerfile
 > touch $@
 
 tmp/.linted.gofmt.sentinel: tmp/.tests-passed.sentinel
@@ -154,8 +154,8 @@ tmp/.linted.go.vet.sentinel: tmp/.tests-passed.sentinel
 tmp/.linted.golangci-lint.sentinel: .golangci.yaml tmp/.tests-passed.sentinel
 > mkdir -p $(@D)
 > lint_flags=()
-> if [[ -t 1 ]]; then lint_flags+=("--tty"); fi
-> docker run --env=XDG_CACHE_HOME=/go/cache --interactive --pull=always --rm --volume="$(shell pwd):/app:ro" \
+> if [[ -t 0 ]]; then lint_flags+=("--tty"); fi
+> docker run --env=XDG_CACHE_HOME=/go/cache --interactive --pull=always --rm --volume="$$(pwd):/app:ro" \
   --volume=golangci-lint-cache-$(subst /,_,$(image_repository)):/go --workdir=/app $${lint_flags[*]} \
   golangci/golangci-lint golangci-lint run --verbose
 > touch $@
@@ -167,7 +167,7 @@ gofmt: ## Runs 'gofmt -s' to format and simplify all Go code.
 # Docker image - re-build if the lint output is re-run (and so, by proxy, whenever the source files have changed).
 out/image-id: Dockerfile tmp/.linted.sentinel
 > mkdir -p $(@D)
-> image_id="$(image_repository):$(shell uuidgen)"
+> image_id="$(image_repository):$$(uuidgen)"
 > DOCKER_BUILDKIT=1 docker build --tag="$${image_id}" .
 > echo "$${image_id}" > out/image-id
 
