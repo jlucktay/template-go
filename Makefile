@@ -66,6 +66,17 @@ help:
   | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 .PHONY: help
 
+# Set up some lazy initialisation functions to find code files, so that targets using the output of '$(shell ...)' only
+# execute their respective shell commands when they need to, rather than every single instance of '$(shell ...)' being
+# executed every single time 'make' is run for any target and wasting a lot of time.
+# Further reading at https://www.oreilly.com/library/view/managing-projects-with/0596006101/ch10.html under the 'Lazy
+# Initialization' heading.
+find-go-files = $(shell find $1 -name vendor -prune -or -type f \( -iname '*.go' -or -name go.mod -or -name go.sum \))
+
+GO_FILES = $(redefine-go-files) $(GO_FILES)
+
+redefine-go-files = $(eval GO_FILES := $(call find-go-files, .))
+
 # Tests look for sentinel files to determine whether or not they need to be run again.
 # If any Go code file has been changed since the sentinel file was last touched, it will trigger a retest.
 test: tmp/.tests-passed.sentinel ## Run tests.
@@ -101,17 +112,17 @@ clean-all: clean clean-docker ## Clean all of the things.
 .PHONY: clean-all
 
 # Tests - re-run if any Go files have changes since 'tmp/.tests-passed.sentinel' was last touched.
-tmp/.tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
+tmp/.tests-passed.sentinel: $(GO_FILES)
 > mkdir -p $(@D)
 > go test -v ./...
 > touch $@
 
-tmp/.cover-tests-passed.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
+tmp/.cover-tests-passed.sentinel: $(GO_FILES)
 > mkdir -p $(@D)
 > go test -count=1 -covermode=atomic -coverprofile=cover.out -race -v ./...
 > touch $@
 
-tmp/.benchmarks-ran.sentinel: $(shell find . -type f -iname "*.go") go.mod go.sum
+tmp/.benchmarks-ran.sentinel: $(GO_FILES)
 > mkdir -p $(@D)
 > go test -bench=. -benchmem -benchtime=10s -run='^DoNotRunTests$$' -v ./...
 > touch $@
