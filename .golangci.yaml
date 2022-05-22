@@ -23,6 +23,8 @@ linters-settings:
 
   gci:
     sections:
+      - standard
+      - default
       - prefix(go.jlucktay.dev/template-go)
 
   goconst:
