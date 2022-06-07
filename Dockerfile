@@ -1,37 +1,33 @@
-FROM golang:1.17 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.17 AS builder
+ARG TARGETOS TARGETARCH
 
 # Set some shell options for using pipes and such.
 SHELL [ "/bin/bash", "-euo", "pipefail", "-c" ]
 
-# Install/update the common CA certificates package now, and blag it later.
-RUN apt-get update \
-  && DEBIAN_FRONTEND=noninteractive apt-get install --assume-yes --no-install-recommends ca-certificates \
-  && apt-get autoremove --assume-yes \
-  && apt-get clean \
-  && rm --force --recursive /root/.cache \
-  && rm --force --recursive /var/lib/apt/lists/*
-
-# Don't call any C code; the 'scratch' base image used later won't have any libraries to reference.
-ENV CGO_ENABLED=0
-
-# Use Go modules
-ENV GO111MODULE=on
-
+# Copy nessesary 'go.mod' and 'go.sum' files for separate Go module downloads.
 WORKDIR /go/src/go.jlucktay.dev/template-go
+COPY go.* .
 
-# Add the sources.
+# Switch into component directory and download Go modules.
+# This is done in a separate step before adding the source code, to prevent invalidation of cached Go modules if only
+# our source code is changed and not any dependencies.
+RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
+  GOOS=$TARGETOS GOARCH=$TARGETARCH go mod download
+
+# Copy in all of the source code.
 COPY . .
 
 # Compile! With the '--mount' flags below, Go's build cache is kept between builds.
 # https://github.com/golang/go/issues/27719#issuecomment-514747274
-RUN --mount=type=cache,target=/go/pkg/mod \
-  --mount=type=cache,target=/root/.cache/go-build \
-  go build -ldflags="-X 'go.jlucktay.dev/version.builtBy=Docker'" -trimpath -v -o /bin/template-go
+RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
+  --mount=type=cache,id=gobuild,target=/root/.cache/go-build \
+  GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
+  -ldflags="-X 'go.jlucktay.dev/version.builtBy=Docker'" -trimpath -v -o /bin/template-go
 
-FROM scratch AS runner
+FROM gcr.io/distroless/base:nonroot AS deployable
+USER 65532
 
-# Bring common CA certificates and binary over.
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+# Bring binary over.
 COPY --from=builder /bin/template-go /bin/template-go
 
 VOLUME /workdir
