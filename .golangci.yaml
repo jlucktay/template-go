@@ -130,7 +130,7 @@ linters:
     - wsl
 
 output:
-  format: colored-line-number
+  format: tab
   print-issued-lines: true
   print-linter-name: true
   uniq-by-line: true
