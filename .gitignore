@@ -27,6 +27,7 @@
 # Builds and binaries
 /bin/
 /dist/
+/hack/bin/
 template-go
 
 # Makefile things

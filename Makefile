@@ -104,11 +104,14 @@ clean-docker: ## Clean up any local built Docker images and the volume used for 
 > docker images \
   --filter=reference=$(image_repository) \
   --no-trunc --quiet | sort --ignore-case --unique | xargs -n 1 docker rmi --force
-> docker volume rm golangci-lint-cache-$(subst /,_,$(image_repository)) || true
 > rm -f out/image-id
 .PHONY: clean-docker
 
-clean-all: clean clean-docker ## Clean all of the things.
+clean-hack: ## Deletes all binaries under 'hack'.
+> rm -rf hack/bin
+.PHONY: clean-hack
+
+clean-all: clean clean-docker clean-hack ## Clean all of the things.
 .PHONY: clean-all
 
 # Tests - re-run if any Go files have changes since 'tmp/.tests-passed.sentinel' was last touched.
@@ -126,6 +129,12 @@ tmp/.benchmarks-ran.sentinel: $(GO_FILES)
 > mkdir -p $(@D)
 > go test -bench=. -benchmem -benchtime=10s -run='^DoNotRunTests$$' -v ./...
 > touch $@
+
+hack/bin/golangci-lint:
+> mkdir -p $(@D)
+> curl --fail --location --show-error --silent \
+  https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh \
+  | sh -s -- -b $(CURDIR)/hack/bin
 
 # Lint - re-run if the tests have been re-run (and so, by proxy, whenever the source files have changed).
 # These checks are all read-only and will not make any changes.
@@ -151,13 +160,9 @@ tmp/.linted.go.vet.sentinel: tmp/.tests-passed.sentinel
 > go vet ./...
 > touch $@
 
-tmp/.linted.golangci-lint.sentinel: .golangci.yaml tmp/.tests-passed.sentinel
+tmp/.linted.golangci-lint.sentinel: .golangci.yaml hack/bin/golangci-lint tmp/.tests-passed.sentinel
 > mkdir -p $(@D)
-> lint_flags=()
-> if [[ -t 0 ]]; then lint_flags+=("--tty"); fi
-> docker run --env=XDG_CACHE_HOME=/go/cache --interactive --pull=always --rm --volume="$$(pwd):/app:ro" \
-  --volume=golangci-lint-cache-$(subst /,_,$(image_repository)):/go --workdir=/app $${lint_flags[*]} \
-  golangci/golangci-lint golangci-lint run --verbose
+> hack/bin/golangci-lint run --verbose
 > touch $@
 
 gofmt: ## Runs 'gofmt -s' to format and simplify all Go code.
