@@ -25,6 +25,7 @@ linters-settings:
     sections:
       - standard
       - default
+      - prefix(go.jlucktay.dev)
       - prefix(go.jlucktay.dev/template-go)
 
   goconst:
