@@ -8,9 +8,8 @@ SHELL [ "/bin/bash", "-euo", "pipefail", "-c" ]
 WORKDIR /go/src/go.jlucktay.dev/template-go
 COPY go.* .
 
-# Switch into component directory and download Go modules.
-# This is done in a separate step before adding the source code, to prevent invalidation of cached Go modules if only
-# our source code is changed and not any dependencies.
+# Download Go modules in a separate step before adding the source code, to prevent invalidation of cached Go modules if
+# only our source code is changed and not any dependencies.
 RUN --mount=type=cache,id=gomod,target=/go/pkg/mod \
   GOOS=$TARGETOS GOARCH=$TARGETARCH go mod download
 
