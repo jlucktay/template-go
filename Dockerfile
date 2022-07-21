@@ -4,7 +4,7 @@ ARG TARGETOS TARGETARCH
 # Set some shell options for using pipes and such.
 SHELL [ "/bin/bash", "-euo", "pipefail", "-c" ]
 
-# Copy nessesary 'go.mod' and 'go.sum' files for separate Go module downloads.
+# Copy necessary 'go.mod' and 'go.sum' files for separate Go module downloads.
 WORKDIR /go/src/go.jlucktay.dev/template-go
 COPY go.* .
 
