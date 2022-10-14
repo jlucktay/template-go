@@ -1,5 +1,5 @@
 module go.jlucktay.dev/template-go
 
-go 1.17
+go 1.19
 
-require go.jlucktay.dev/version v0.2.0
+require go.jlucktay.dev/version v0.3.0

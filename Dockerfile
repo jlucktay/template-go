@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM golang:1.17 AS builder
+FROM --platform=$BUILDPLATFORM golang:1.19 AS builder
 ARG TARGETOS TARGETARCH
 
 # Set some shell options for using pipes and such.
