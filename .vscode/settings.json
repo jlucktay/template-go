@@ -1,4 +1,7 @@
 {
+  "go.testEnvVars": {
+    "IS_NO_COLOR": true
+  },
   "gopls": {
     "formatting.local": "go.jlucktay.dev/template-go"
   }
