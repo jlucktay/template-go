@@ -121,7 +121,7 @@ clean-all: clean clean-docker clean-hack ## Clean all of the things.
 # Tests - re-run if any Go files have changes since 'tmp/.tests-passed.sentinel' was last touched.
 tmp/.tests-passed.sentinel: $(GO_FILES)
 > mkdir -p $(@D)
-> go test -v ./...
+> go test -count=1 -v ./...
 > touch $@
 
 tmp/.cover-tests-passed.sentinel: $(GO_FILES)
