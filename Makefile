@@ -4,7 +4,7 @@
 # - https://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
 # Default - top level rule is what gets run when you run just 'make' without specifying a goal/target.
-.DEFAULT_GOAL := build
+.DEFAULT_GOAL := help
 
 # Make will delete the target of a rule if it has changed and its recipe exits with a nonzero exit status, just as it
 # does when it receives a signal.
@@ -60,10 +60,14 @@ all: test lint build ## Test and lint and build.
 binary_name := $(shell basename $(CURDIR))
 image_repository := jlucktay/$(binary_name)
 
-# Adjust the width of the first column by changing the '-20s' value in the printf pattern.
-help:
-> @grep -E '^[a-zA-Z0-9_-]+:.*? ## .*$$' $(filter-out .env, $(MAKEFILE_LIST)) | sort \
-  | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+# Adjust the width of the first column by changing the '-25s' value in the HELP_FORMAT variable.
+HELP_FORMAT="  \033[36m%-25s\033[0m %s\n"
+help: ## Display this usage information.
+> @echo "Valid targets:"
+> @grep -E '^[^ ]+:.*?## .*$$' $(filter-out .env, $(MAKEFILE_LIST)) \
+  | sort \
+  | awk 'BEGIN { FS = ":.*?## " }; \
+    { printf $(HELP_FORMAT), $$1, $$2 }'
 .PHONY: help
 
 # Set up some lazy initialisation functions to find code files, so that targets using the output of '$(shell ...)' only
@@ -89,7 +93,7 @@ lint: tmp/.linted.sentinel ## Lint the Dockerfile and all of the Go code. Will a
 
 # Builds look for image ID files to determine whether or not they need to build again.
 # If any Go code file has been changed since the image ID file was last touched, it will trigger a rebuild.
-build: out/image-id ## [DEFAULT] Build the Docker image. Will also test and lint.
+build: out/image-id ## Build the Docker image. Will also test and lint.
 
 build-binary: $(binary_name) ## Build a bare binary only, without a Docker image wrapped around it.
 
@@ -100,7 +104,7 @@ clean: ## Clean up the built binary, test coverage, and the temp and output sub-
 > rm -rf cover.out tmp out
 .PHONY: clean
 
-clean-docker: ## Clean up any local built Docker images and the volume used for caching golangci-lint.
+clean-docker: ## Clean up any local built Docker images.
 > docker images \
   --filter=reference=$(image_repository) \
   --no-trunc --quiet | sort --ignore-case --unique | xargs -n 1 docker rmi --force
