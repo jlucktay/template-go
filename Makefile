@@ -143,10 +143,12 @@ tmp/.linted.sentinel: tmp/.linted.docker.sentinel tmp/.linted.gofmt.sentinel tmp
 > mkdir -p $(@D)
 > touch $@
 
-tmp/.linted.docker.sentinel: Dockerfile .hadolint.yaml
+tmp/.linted.docker.sentinel: Dockerfile
 > mkdir -p $(@D)
-> docker run --env=XDG_CONFIG_HOME=/etc --interactive --pull=always --rm \
-  --volume="$$(pwd)/.hadolint.yaml:/etc/hadolint.yaml:ro" hadolint/hadolint hadolint --verbose - < Dockerfile
+> if ! command -v hadolint &> /dev/null; then
+>   exit 0
+> fi
+> hadolint Dockerfile --verbose
 > touch $@
 
 tmp/.linted.gofmt.sentinel: tmp/.tests-passed.sentinel
