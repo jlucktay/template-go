@@ -86,20 +86,20 @@ redefine-go-files = $(eval GO_FILES := $(call find-go-files, .))
 test: tmp/.tests-passed.sentinel ## Run tests.
 test-cover: tmp/.cover-tests-passed.sentinel ## Run all tests with the race detector and output a coverage profile.
 bench: tmp/.benchmarks-ran.sentinel ## Run enough iterations of each benchmark to take ten seconds each.
+.PHONY: test test-cover bench
 
 # Linter checks look for sentinel files to determine whether or not they need to check again.
 # If any Go code file has been changed since the sentinel file was last touched, it will trigger a rerun.
 lint: tmp/.linted.sentinel ## Lint the Dockerfile and all of the Go code. Will also test.
+.PHONY: lint
 
 # Builds look for image ID files to determine whether or not they need to build again.
 # If any Go code file has been changed since the image ID file was last touched, it will trigger a rebuild.
 build: out/image-id ## Build the Docker image. Will also test and lint.
-
 build-binary: $(binary_name) ## Build a bare binary only, without a Docker image wrapped around it.
+.PHONY: build build-binary
 
-.PHONY: all test test-cover bench lint build build-binary
-
-clean: ## Clean up the built binary, test coverage, and the temp and output sub-directories.
+clean: ## Clean up any build output, test coverage, and the temp and output sub-directories.
 > go clean -x -v
 > rm -rf cover.out tmp out
 .PHONY: clean
