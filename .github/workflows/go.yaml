@@ -6,13 +6,10 @@ on:
       - v*
     branches:
       - main
-    paths:
-      - "**.go"
+
   pull_request:
     branches:
       - main
-    paths:
-      - "**.go"
 
 # Concurrency ensures that only a single workflow using the same concurrency group will run at a time.
 # When a workflow is queued in the same repository and concurrency group, any workflow in progress will be cancelled.
@@ -91,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out ${{ github.repository }} - all history
+      - name: Checkout ${{ github.repository }} - all history
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -101,7 +98,7 @@ jobs:
           git branch --all --contains '${{ github.ref }}' --no-column --format='%(refname)'
           | grep -c '\/main$'
 
-      - name: Set up Go 1.20
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version: "1.20"
