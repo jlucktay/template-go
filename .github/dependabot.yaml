@@ -11,7 +11,7 @@ updates:
     commit-message:
       prefix: "Actions"
       include: "scope"
-    open-pull-requests-limit: "3"
+    open-pull-requests-limit: 3
 
   # Check for updates to direct Go dependencies every week.
   - package-ecosystem: "gomod"
@@ -26,4 +26,4 @@ updates:
     commit-message:
       prefix: "Go"
       include: "scope"
-    open-pull-requests-limit: "3"
+    open-pull-requests-limit: 3
