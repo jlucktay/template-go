@@ -149,10 +149,9 @@ tmp/.linted.sentinel: tmp/.linted.docker.sentinel tmp/.linted.gofmt.sentinel tmp
 
 tmp/.linted.docker.sentinel: Dockerfile
 > mkdir -p $(@D)
-> if ! command -v hadolint &> /dev/null; then
->   exit 0
+> if command -v hadolint &> /dev/null; then
+>   hadolint Dockerfile --verbose
 > fi
-> hadolint Dockerfile --verbose
 > touch $@
 
 tmp/.linted.gofmt.sentinel: tmp/.tests-passed.sentinel
