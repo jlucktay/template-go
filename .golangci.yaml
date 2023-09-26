@@ -2,7 +2,7 @@ issues:
   exclude-use-default: false
   exclude:
     # Don't expect godocs on exported static errors.
-    - "^exported: exported var Err[A-Za-z]+ should have comment or be unexported$"
+    - '^exported: exported var Err[A-Za-z]+ should have comment or be unexported$'
   max-issues-per-linter: 0
   max-same-issues: 0
   new-from-rev: origin/main
