@@ -11,6 +11,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    shell: bash
+
 # Concurrency ensures that only a single workflow using the same concurrency group will run at a time.
 # When a workflow is queued in the same repository and concurrency group, any workflow in progress will be cancelled.
 # This concurrency group is keyed to the 'ref' property in the 'github' context, to map back to the branch/tag that
@@ -25,21 +29,18 @@ jobs:
 
     strategy:
       matrix:
-        go-version:
-          - "1.18"
-          - "1.19"
-          - "1.20"
         platform:
-          - ubuntu-latest
           - macos-latest
+          - ubuntu-latest
 
     runs-on: ${{ matrix.platform }}
 
     steps:
-      - name: Set up Go ${{ matrix.go-version }}
+      - name: Set up latest version of Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go-version }}
+          go-version: "^1"
+          check-latest: true
 
       - name: Check out code
         uses: actions/checkout@v3
@@ -98,10 +99,11 @@ jobs:
           git branch --all --contains '${{ github.ref }}' --no-column --format='%(refname)'
           | grep -c '\/main$'
 
-      - name: Set up Go
+      - name: Set up latest version of Go 1.x
         uses: actions/setup-go@v4
         with:
-          go-version: "1.20"
+          go-version: "^1"
+          check-latest: true
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v4
